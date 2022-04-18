@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="case-listener-test-suite.xml" />
+	<munit:test name="case-listener-test-suite-case-listener_update-sfdc-jiraTest" doc:id="a3bc3e83-3029-4257-a9fc-0643e4b5cfb4" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when" doc:id="81fa8889-b0f7-4113-a812-71a9f56f8904" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="jira-sys-api-httpRequestConfig" attributeName="config-ref" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/json&#10;---&#10;(readUrl('classpath://transforms/examples/case-jira-mock-response.json'))]" mediaType="application/json" encoding="UTF-8" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when" doc:id="3d5a3667-2fce-4d45-b1d1-d7257e631d83" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Invoke Update Case Process API" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="case-prc-api-httpRequestConfig" attributeName="config-ref" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[&#10;output application/json&#10;---&#10;(readUrl('classpath://transforms/examples/case-update-mock-payload.dwl'))&#10;&#10;]" mediaType="application/json" encoding="UTF-8" />
+					<munit-tools:variables >
+						<munit-tools:variable key="httpStatus" value="#['400']" mediaType="text/plain" />
+						<munit-tools:variable key="ackId" value="#['eyJkZXN0aW5hdGlvbiI6ImN']" />
+					</munit-tools:variables>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when" doc:id="8ebdd6e4-76a9-45a1-acc5-766b269cd999" processor="anypoint-mq:nack">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Anypoint_MQ_Config" attributeName="config-ref" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/json&#10;---&#10;ackToken: 'eyJkZXN0aW5hdGlvbiI6ImN']" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="Set Event" doc:id="213f6289-3a8e-45a7-bbaf-d851ca9a1a19" >
+				<munit:payload value="#[output application/json&#10;---&#10;(readUrl('classpath://transforms/examples/case-jira-mock-response.json'))]" />
+			</munit:set-event>
+			<flow-ref doc:name="Flow-ref to case-listener_update-sfdc-jira" doc:id="5e3498bc-2f29-4962-a297-3fe13d22a9fb" name="case-listener_update-sfdc-jira" />
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-equals doc:name="Assert equals" doc:id="8af504f4-1fa6-42d3-83b3-d9d2142d77fe" actual="#[payload]" expected="#[{ackToken: 'eyJkZXN0aW5hdGlvbiI6ImN'}]"/>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="case-listener-test-suite-case-listener_create-caseTest" doc:id="a828fa36-3e14-4cef-a959-2399bd645d15" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when" doc:id="7adc1d9e-3389-4700-adf1-94938662f623" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="POST" attributeName="method" />
+					<munit-tools:with-attribute whereValue="Invoke  Case Process API" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="3488c9c1-4602-47e7-88f0-205871bf6d3d" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="${case-prc-api.path}" attributeName="path" />
+					<munit-tools:with-attribute whereValue="ALWAYS" attributeName="sendCorrelationId" />
+					<munit-tools:with-attribute whereValue="#[vars.correlation]" attributeName="correlationId" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[&#10;output application/json&#10;---&#10;(readUrl('classpath://transforms/examples/case-create-mock-response.json'))&#10;&#10;]" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when" doc:id="afd22ba1-52b0-488c-a7b6-367430c0c814" processor="anypoint-mq:ack" >
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="ack token" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="684909d0-71c4-433d-9656-8b2cb4ee3553" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="Anypoint_MQ_Config" attributeName="config-ref" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/json&#10;---&#10;ackToken: 'wert9000hh']" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="Set Event" doc:id="ffd621ef-e280-4a28-ba37-064c9642cf6d" />
+			<flow-ref doc:name="Flow-ref to case-listener_create-case" doc:id="9124ff41-4cdf-4cb1-9206-93fe48ecc59e" name="case-listener_create-case"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-equals doc:name="Assert equals" doc:id="d9470d0a-c3b6-4eb8-a01a-d58de5730d75" actual="#[payload]" expected='#[{&#10;  "ackToken": "wert9000hh"&#10;}]'/>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="case-listener-test-suite-case-listener_update-sfdc-snowTest" doc:id="0fafd5ad-3872-49ee-9017-98a6cbad6fbb" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when" doc:id="6a1500dd-ce26-4d2c-9446-b1cab6857eb5" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="PATCH" attributeName="method" />
+					<munit-tools:with-attribute whereValue="Invoke Update Case Process API" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="842c5919-0de2-4dd8-95fd-3ce03b248b38" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="case-prc-api-httpRequestConfig" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="${case-prc-api.case-update-path}" attributeName="path" />
+					<munit-tools:with-attribute whereValue="ALWAYS" attributeName="sendCorrelationId" />
+					<munit-tools:with-attribute whereValue="#[vars.correlation]" attributeName="correlationId" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[&#10;output application/json&#10;---&#10;(readUrl('classpath://transforms/examples/case-update-mock-payload.dwl'))&#10;&#10;]" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when" doc:id="cd761df4-b797-4718-9c9d-476b4f9c7526" processor="anypoint-mq:ack">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="ack token" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="9f1d8eed-127f-4115-b3ba-7ed0643bb724" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="Anypoint_MQ_Config" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="#[vars.ackId]" attributeName="ackToken" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/json&#10;---&#10;ackToken: 'wert9000hh']" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="Set Event" doc:id="cf6ddcb2-0058-48a4-adf0-c3992222633a" />
+			<flow-ref doc:name="Flow-ref to case-listener_update-sfdc-snow" doc:id="230ab9cb-1ecc-4e08-b5e3-4dab56308539" name="case-listener_update-sfdc-snow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-equals doc:name="Assert equals" doc:id="fd307aea-1a31-4776-a997-194899046eaa" actual="#[payload]" expected='#[{&#10;  "ackToken": "wert9000hh"&#10;}]' />
+		</munit:validation>
+	</munit:test>
+	<munit:test name="case-listener-test-suite-case-listener_update-sfdc-snowTest-error" doc:id="05ddc0b8-10cd-48e5-ab3f-6f3f6fc7eb1c" description="Test">
+			<munit:behavior>
+			<munit-tools:mock-when doc:name="Mock when" doc:id="e9f10381-eed8-4721-b95e-eeda2b524e7a" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="case_case-update-sf" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="5691a46a-c4e5-4c66-94b6-95ae43376e32" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="case_case-update-sf" attributeName="name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:error typeId="ANY" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when" doc:id="bfc72c4c-246e-4146-aa83-987cd3edf6e1" processor="anypoint-mq:nack">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Nack token" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="87399f28-a540-4250-ba3c-07d6ba4e4885" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="Anypoint_MQ_Config" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="#[vars.ackId]" attributeName="ackToken" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/json&#10;---&#10;ackToken: 'wert9000hh']" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when" doc:id="d8c4c5e7-1d21-4aec-ae7c-4a12b8d07269" processor="raise-error">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="raise error for ANY" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="c93cb469-3300-4742-9183-f8f88521f609" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="ANY" attributeName="type" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+			</munit:behavior>
+		<munit:execution>
+				<munit:set-event doc:name="Set Event" doc:id="938422ee-a543-4f52-810c-df9f34612e2f" />
+				<flow-ref doc:name="Flow-ref to case-listener_update-sfdc-snow" doc:id="18efaf55-23e5-4326-87f9-c6b9bbbe766f" name="case-listener_update-sfdc-snow" />
+			</munit:execution>
+			<munit:validation>
+			<munit-tools:assert-that doc:name="Assert that" doc:id="9fac4d5b-60ad-4679-b6a8-2d4f444092dc" expression="#[payload]" is="#[MunitTools::notNullValue()]"/>
+			</munit:validation>
+		</munit:test>
+	<munit:test name="case-listener-test-suite-case-listener_create-caseTest1" doc:id="9c2ca476-71f8-4e69-8d62-56687ed7c26c" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when" doc:id="daeb19fc-0a16-40bb-a4fa-abfa44ba4020" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="case_case-create" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="d62156b0-e968-4a1c-af39-47011b1f1c0e" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="case_case-create" attributeName="name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:error typeId="ANY" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when" doc:id="d877f2c9-2c52-4ed0-985b-05bcfae7a533" processor="anypoint-mq:nack">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Nack token" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="6ba2c22a-14bf-477d-976f-bef7d968bc3a" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="Anypoint_MQ_Config" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="#[vars.ackId]" attributeName="ackToken" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/json&#10;---&#10;ackToken: 'wert9000hh']" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when" doc:id="5112d2e6-c697-4400-84a4-898dcc64f4fa" processor="raise-error">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="raise error for ANY" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="03bbab94-d024-44ff-983b-4ec67fd65e74" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="ANY" attributeName="type" />
+					<munit-tools:with-attribute whereValue="${application-msgs.local-exception-handler-message}" attributeName="description" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<munit:set-event doc:name="Set Event" doc:id="3db6f0a1-74d4-49a0-b8c4-bfa561c4fa87" />
+			<flow-ref doc:name="Flow-ref to case-listener_create-case" doc:id="d7201319-af68-47c9-8bc4-b448061cfafa" name="case-listener_create-case"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-that doc:name="Assert that" doc:id="66d6f7ff-ca23-4608-9b2d-e1616ed1f713" expression="#[payload]" is="#[MunitTools::notNullValue()]" />
+		</munit:validation>
+	</munit:test>
+	<munit:test name="case-listener-test-suite-case-listener_update-sfdc-jiraTest1" doc:id="b1887b6f-63bb-4ffa-bdd2-31ec06eed648" description="Test">
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock when" doc:id="7315e65e-9cd4-45ca-9cac-43861d9acad1" processor="flow-ref">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="jira-issue_jira-issue" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="ed030640-7ca7-4369-9083-cd60b4c51d6c" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="jira-issue_jira-issue" attributeName="name" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:error typeId="ANY" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when" doc:id="f0e6c477-0aea-49c8-b0b8-1129287019aa" processor="anypoint-mq:nack">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="Nack token" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="d2caf579-311b-4703-b68d-c057151e5adb" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="Anypoint_MQ_Config" attributeName="config-ref" />
+					<munit-tools:with-attribute whereValue="#[vars.ackId]" attributeName="ackToken" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#[output application/json&#10;---&#10;ackToken: 'wert9000hh']" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock when" doc:id="946e3486-433c-409d-8eca-26d329508254" processor="raise-error">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute whereValue="raise error for ANY" attributeName="doc:name" />
+					<munit-tools:with-attribute whereValue="84f6d401-ba0a-4fd9-b465-c0748ffc75f6" attributeName="doc:id" />
+					<munit-tools:with-attribute whereValue="ANY" attributeName="type" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<flow-ref doc:name="Flow-ref to case-listener_update-sfdc-jira" doc:id="d9b6e9b9-9675-4f6e-a8eb-31e839208065" name="case-listener_update-sfdc-jira"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-that doc:name="Assert that" doc:id="7d7748c7-0ed9-4696-8cab-d79e673760e3" expression="#[payload]" is="#[MunitTools::notNullValue()]" />
+		</munit:validation>
+	</munit:test>
+
+
+</mule>

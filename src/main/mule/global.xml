@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule
+	xmlns:anypoint-mq="http://www.mulesoft.org/schema/mule/anypoint-mq"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger"
+	xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns:wsc="http://www.mulesoft.org/schema/mule/wsc"
+	xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway"
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd
+http://www.mulesoft.org/schema/mule/wsc http://www.mulesoft.org/schema/mule/wsc/current/mule-wsc.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/anypoint-mq http://www.mulesoft.org/schema/mule/anypoint-mq/current/mule-anypoint-mq.xsd">
+	<global-property doc:name="Global Property-mule.env"
+		doc:id="11caecfb-a4ea-4936-a211-fbff3b78e4e2" name="mule.env"
+		value="dev" />
+	<global-property doc:name="Global Property-mule.key"
+		doc:id="966a9104-e4db-46bc-a217-3c690013150c" name="mule.key"
+		value="${mule.key}" />
+
+	<configuration-properties
+		doc:name="Configuration properties based on env"
+		doc:id="4d0c522f-b3d9-4f9e-84e8-91a9ade31036"
+		file="config/config-${mule.env}.yaml" />
+	<secure-properties:config
+		name="Secure_Properties_Config"
+		doc:name="Secure Properties Config based on env"
+		doc:id="f42b4358-b6bc-49bb-a1ed-6eca27c7a1bd"
+		file="config/config-secured-${mule.env}.yaml" key="${mule.key}" >
+		<secure-properties:encrypt algorithm="Blowfish" />
+	</secure-properties:config>
+
+	<configuration
+		doc:name="Configuration for application error handler"
+		doc:id="706a0b2d-cc0f-4be3-9c7f-1763f660cd4a"
+		defaultErrorHandler-ref="error-handler_common" />
+	<anypoint-mq:config name="Anypoint_MQ_Config"
+		doc:name="Anypoint MQ Config"
+		doc:id="e1212471-28fa-49e6-a1fb-ed7c994f4e22">
+		<anypoint-mq:connection
+			clientId="${secure::anypoint-mq.client-id}"
+			clientSecret="${secure::anypoint-mq.client-secret}"
+			url="${anypoint-mq.server-url}">
+			<reconnection>
+				<reconnect frequency="${reconnection.amq.frequency}"
+					count="${reconnection.amq.attempts}" />
+			</reconnection>
+		</anypoint-mq:connection>
+	</anypoint-mq:config>
+	
+	<http:request-config
+		name="case-prc-api-httpRequestConfig"
+		doc:name="Case PRC API HTTP Request configuration "
+		doc:id="46110b08-e5eb-47a3-88a5-d9939169748d"
+		basePath="${case-prc-api.base-path}"
+		responseTimeout="${case-prc-api.response-timeout}">
+		<http:request-connection
+			host="${case-prc-api.host}" port="${case-prc-api.port}"
+			connectionIdleTimeout="${case-prc-api.connection-idle-timeout}" protocol="HTTPS">
+			<reconnection>
+				<reconnect frequency="${case-prc-api.http-frequency}"
+					count="${case-prc-api.http-reconnection-attempts}" />
+			</reconnection>
+			<http:authentication>
+				<http:basic-authentication
+					username="${secure::case-listener.http-client.client-id}"
+					password="${secure::case-listener.http-client.client-secret}" />
+			</http:authentication>
+		</http:request-connection>
+	</http:request-config>
+
+	<http:request-config
+		name="jira-sys-api-httpRequestConfig"
+		doc:name="Jira Sys API HTTP Request configuration"
+		doc:id="b39df1dc-ddf6-4b2f-ba78-715964480331"
+		basePath="${jira-sys-api.base-path}"
+		responseTimeout="${jira-sys-api.response-timeout}">
+		<http:request-connection
+			host="${jira-sys-api.host}" port="${jira-sys-api.port}"
+			connectionIdleTimeout="${jira-sys-api.connection-idle-timeout}" protocol="HTTPS">
+			<reconnection>
+				<reconnect frequency="${jira-sys-api.http-frequency}"
+					count="${jira-sys-api.http-reconnection-attempts}" />
+			</reconnection>
+			<http:authentication>
+				<http:basic-authentication
+					username="${secure::case-listener.http-client.client-id}"
+					password="${secure::case-listener.http-client.client-secret}" />
+			</http:authentication>
+		</http:request-connection>
+	</http:request-config>
+	<import doc:name="Import global-common"
+		doc:id="b3d612e2-bb75-4a90-98d8-c863dda27a25" file="global-common.xml" />
+	<import doc:name="Import common-error-handler"
+		doc:id="75cfbb25-9865-4ca0-b2e1-b976caa5ac20"
+		file="common-error-handler.xml" />
+
+
+</mule>

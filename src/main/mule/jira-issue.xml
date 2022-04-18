@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:json-logger="http://www.mulesoft.org/schema/mule/json-logger"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/json-logger http://www.mulesoft.org/schema/mule/json-logger/current/mule-json-logger.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="jira-issue_jira-issue"
+		doc:id="82084986-7f5b-4d11-8050-48ff323bf873">
+		<logger level="INFO" doc:name="Before Request"
+			doc:id="b5a448a2-154e-49f9-baa5-636031e35391"
+			message="${application-msgs.before-connector-call-message}" />
+		<until-successful
+			maxRetries="${retry.http.numRetries}" doc:name="retry jira-sys-api"
+			doc:id="b8f33fd1-726d-446e-94e6-b3944961ee94"
+			millisBetweenRetries="${retry.http.delayMillisecs}">
+			<try doc:name="Try-Issue"
+				doc:id="c8fec2c5-5ab3-461d-9040-ded84edcc887">
+				<http:request method="GET"
+					doc:name="Invoke Jira Sys API"
+					doc:id="ebe176c4-7e10-41b8-9a3e-e12d2fa1c0e9"
+					config-ref="jira-sys-api-httpRequestConfig"
+					path="#[p('jira-sys-api.path') ++ '/'++ payload.issueId]"
+					sendCorrelationId="ALWAYS" correlationId="#[vars.correlation]">
+					<http:headers><![CDATA[#[output application/java
+---
+{
+	"Content-Type" : "application/json"
+}]]]></http:headers>
+				</http:request>
+				<error-handler>
+					<on-error-continue enableNotifications="true"
+						logException="true" doc:name="On Error Continue"
+						doc:id="040757e2-0d64-45ab-9973-4bf48a90ff70"
+						type="HTTP:BAD_REQUEST, HTTP:CLIENT_SECURITY, HTTP:CONNECTIVITY, HTTP:FORBIDDEN, HTTP:METHOD_NOT_ALLOWED, HTTP:NOT_ACCEPTABLE, HTTP:NOT_FOUND, HTTP:PARSING, HTTP:RETRY_EXHAUSTED, HTTP:SECURITY, HTTP:UNAUTHORIZED, HTTP:UNSUPPORTED_MEDIA_TYPE">
+						<flow-ref doc:name="common-error-handler_http-exception"
+							doc:id="c342169f-869b-404d-9d77-4a57e98d2c23"
+							name="common-error-handler_http-exception" />
+
+					</on-error-continue>
+				</error-handler>
+			</try>
+		</until-successful>
+		<logger level="INFO" doc:name="After Request"
+			doc:id="bbc939f5-1f66-46d2-9ffb-21c99b6e9830"
+			message="${application-msgs.after-connector-call-message}" />
+		<ee:transform doc:name="JIRA-SFDC map"
+			doc:id="b690db41-8872-457d-91e1-2f92a472523f">
+			<ee:message>
+				<ee:set-payload
+					resource="transforms/dwl/issue-case-update-json.dwl" />
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>

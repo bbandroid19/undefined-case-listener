@@ -1,0 +1,17 @@
+{
+  "projectKey": "AC",
+  "summary": "JIRA UPDATES TO SVC",
+  "description": "JIRA UPDATES TO SVC DESC",
+  "issuetype": "Bug",
+  "priority": "Highest",
+  "sfdcCaseId": "5006g0000022Ta6AAE",
+  "status": "To Do",
+  "owner": "Krishna Chakra",
+  "lastUpdatedDate": "2019-12-05T23:30:46.564-0500",
+  "comments": "Inserting Comments to SVC from Jira UPDATES working",
+  "externalComments": "Inserting Comments to SVC from Jira UPDATES working",
+  "externalStatus": "To Do",
+  "externalSystemLastUpdated": "2019-12-05T23:30:46.564-0500",
+  "externalOwner": "",
+  "externalPriority": "Highest"
+}

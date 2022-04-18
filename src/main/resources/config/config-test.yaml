@@ -1,0 +1,78 @@
+# Listener configuration
+#case-listener:
+   #http-client:
+      #client-id: "Client Id overridden at deploy time"
+      #client-secret: "Client Secret overridden at deploy time"
+      
+# Case Process API Configurations  
+case-prc-api:
+  # Replace with respective application hostname
+  host: "accel-case-prc-api.us-e2.cloudhub.io"
+  port: "443"
+  base-path: "/"
+  response-timeout: "60000"
+  connection-idle-timeout: "3000"
+  http-frequency: "5000"
+  http-reconnection-attempts: "2"
+  path: "/api/case"
+  case-update-path: "/api/sfdc-case/{caseId}"
+  
+# Jira System API Configurations
+jira-sys-api:
+  # Replace with respective application hostname
+  host: "accel-jira-sys-api.us-e2.cloudhub.io"
+  port: "443"
+  base-path: "/"
+  response-timeout: "60000"
+  connection-idle-timeout: "3000"
+  http-frequency: "5000"
+  http-reconnection-attempts: "2"
+  path: "/api/issue"
+ 
+# AMQ Configurations
+anypoint-mq:
+    server-url: "https://mq-eu-west-2.anypoint.mulesoft.com/api/v1"
+    case-queue-name: "accelerator-salesforce-case-queue"
+    case-dl-queue-name: "accelerator-salesforce-case-dl-queue"
+    case-update-queue-name: "accelerator-salesforce-update-case-queue-snow"
+    case-update-dl-queue-name: "accelerator-salesforce-update-case-snow-dl-queue"
+    case-update-jira-queue-name: "accelerator-salesforce-update-case-queue-jira"
+    case-update-jira-dl-queue-name: "accelerator-salesforce-case-update-jira-dl-queue"
+    fetchSize: "10"
+    frequency: "1000"
+    ackTimeout: "1000"
+    #client-id:  "Client Id overridden at deploy time"
+    #client-secret: "Client Secret overridden at deploy time"
+    
+# SFDC-JIRA Case Status Mapping Configurations    
+sfdc-mapping:
+  state:
+    Closed: "Closed"
+    Working: "Working"
+    New: "New"
+    Escalated: "Escalated"
+    
+# Retry configuration
+retry:
+   http: 
+    delayMillisecs: "3000"
+    numRetries: "3"
+   amq:
+    delayMillisecs: "3000"
+    numRetries: "3"
+
+# Reconnect configuration
+reconnection:
+     amq:
+      frequency: "2000"
+      attempts: "2"
+
+# Customize the application messages in the below section
+application-msgs:
+   # Before Connector logger message
+   before-connector-call-message: Before Connector Call
+   # After Connector logger message
+   after-connector-call-message: After Connector Call
+   # Local Exception logger message
+   local-exception-handler-message: Exception has occured
+   source: "JIRA"
